@@ -104,15 +104,21 @@ Suites: `customer-flow`, `agent-flow`, `admin-flow`, `adr-0013-bootstrap`.
 
 ## Status
 
-| Milestone                               | Status                      |
-| --------------------------------------- | --------------------------- |
-| M0 — repo skeleton                      | ✅ done                     |
-| M1 — Node backend + SPA + 14 routes     | ✅ done                     |
-| M2 — Playwright e2e + first GitHub push | ✅ done                     |
-| M3 — PHP/Laravel backend                | next                        |
-| M4 — Python/FastAPI (PyPI-gated)        | blocked on registry publish |
-| M5 — Java/Javalin (Maven-gated)         | blocked on registry publish |
-| M6 — CI matrix + final polish           | last                        |
+| Milestone                               | Status                                       |
+| --------------------------------------- | -------------------------------------------- |
+| M0 — repo skeleton                      | ✅ done                                      |
+| M1 — Node backend + SPA + 14 routes     | ✅ done                                      |
+| M2 — Playwright e2e + first GitHub push | ✅ done — 12 tests green                     |
+| M3 — PHP/Laravel backend                | 🟡 install wizard live; customer+agent next  |
+| M4 — Python/FastAPI                     | 🔒 blocked on PyPI publish                   |
+| M5 — Java/Javalin                       | 🔒 blocked on Maven Central publish          |
+| M6 — CI matrix + final polish           | ✅ done — Node e2e + PHP install smoke in CI |
+
+CI: `.github/workflows/ci.yml` runs on every push/PR. Three jobs:
+`lint-and-build` (typecheck + lint + format check), `node-e2e` (Postgres +
+mailpit services + Playwright suite), and `php-install-smoke` (Postgres
+service + apply schema + curl install). Python and Java jobs land when
+the PyPI / Maven Central publish blocks unblock.
 
 For the full milestone plan see internal doc `hearth-plan.md`.
 

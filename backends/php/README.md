@@ -65,8 +65,8 @@ Response shape matches the Node backend exactly:
 
 ```json
 {
-  "inst":     { "id": "inst_<32hex>", "mfa_policy": "off" },
-  "sysadmin": { "id": "usr_<32hex>", "email": "you@example.com", "display_name": "You" }
+    "inst": { "id": "inst_<32hex>", "mfa_policy": "off" },
+    "sysadmin": { "id": "usr_<32hex>", "email": "you@example.com", "display_name": "You" }
 }
 ```
 

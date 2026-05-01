@@ -10,7 +10,10 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter '@hearth/*' run -r typecheck",
+    "build": "pnpm --filter '@hearth/web' run build && pnpm --filter '@hearth/node' run build",
+    "test": "pnpm --filter '@hearth/e2e' run test"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.18.0",
