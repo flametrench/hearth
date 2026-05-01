@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+coverage/
+target/
+vendor/
+.venv/
+playwright-report/
+test-results/
+
+# Vendored — never reformat
+shared/openapi/flametrench-v0.1.yaml
+shared/openapi/flametrench-v0.2-additions.yaml
+
+# Generated
+pnpm-lock.yaml

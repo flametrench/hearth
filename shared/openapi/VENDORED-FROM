@@ -1,0 +1,7 @@
+source:  github.com/flametrench/spec
+tag:     v0.2.0
+commit:  4d1f49f5b431cddbb7a6b97612814ef96d476a27
+files:
+  - flametrench-v0.1.yaml
+  - flametrench-v0.2-additions.yaml
+fetched: 2026-05-01

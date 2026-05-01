@@ -1,0 +1,14 @@
+{
+  "name": "@hearth/web",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hearth SPA (Vite + React + TypeScript). Wired in M1.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

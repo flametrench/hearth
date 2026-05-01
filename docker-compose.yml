@@ -1,0 +1,99 @@
+# Hearth — local development infrastructure.
+#
+# What this brings up:
+#   - mailpit          (SMTP capture + web UI for share-link and notification emails)
+#   - 4 Postgres       (one per backend; share schema, isolated data)
+#
+# Backend services (Node/PHP/Python/Java) are added per-milestone starting in M1.
+# Until then, run a backend locally against its assigned Postgres port below.
+
+services:
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: hearth-mailpit
+    restart: unless-stopped
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI — http://localhost:8025
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  postgres-node:
+    image: postgres:17-alpine
+    container_name: hearth-pg-node
+    restart: unless-stopped
+    ports:
+      - '5501:5432'
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+      POSTGRES_DB: hearth
+    volumes:
+      - hearth-pg-node:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hearth -d hearth']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-php:
+    image: postgres:17-alpine
+    container_name: hearth-pg-php
+    restart: unless-stopped
+    ports:
+      - '5502:5432'
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+      POSTGRES_DB: hearth
+    volumes:
+      - hearth-pg-php:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hearth -d hearth']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-python:
+    image: postgres:17-alpine
+    container_name: hearth-pg-python
+    restart: unless-stopped
+    ports:
+      - '5503:5432'
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+      POSTGRES_DB: hearth
+    volumes:
+      - hearth-pg-python:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hearth -d hearth']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-java:
+    image: postgres:17-alpine
+    container_name: hearth-pg-java
+    restart: unless-stopped
+    ports:
+      - '5504:5432'
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+      POSTGRES_DB: hearth
+    volumes:
+      - hearth-pg-java:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hearth -d hearth']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  hearth-pg-node:
+  hearth-pg-php:
+  hearth-pg-python:
+  hearth-pg-java:
