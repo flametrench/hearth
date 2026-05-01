@@ -1,0 +1,31 @@
+{
+  "name": "@hearth/node",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hearth Node backend (Fastify) — Flametrench v0.2 reference application.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flametrench/authz": "0.2.0",
+    "@flametrench/identity": "0.2.0",
+    "@flametrench/ids": "0.2.0",
+    "@flametrench/server": "0.0.1",
+    "@flametrench/tenancy": "0.2.0",
+    "fastify": "^5.0.0",
+    "pg": "^8.13.0",
+    "uuid": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.2"
+  }
+}

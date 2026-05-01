@@ -1,0 +1,11 @@
+source:  github.com/flametrench/spec
+tag:     v0.2.0
+commit:  4d1f49f5b431cddbb7a6b97612814ef96d476a27
+files:
+  - flametrench-schema.sql  (from reference/postgres.sql — 10 tables, v0.2 includes MFA additions)
+fetched: 2026-05-01
+
+Optional but not vendored: reference/postgres-rls.sql (Row-Level Security policies).
+Hearth does not opt into RLS in M1 to keep the SDK wiring story uncluttered.
+Adopters who want defense-in-depth can apply it via the same refresh.sh
+pattern after standing up Hearth.
