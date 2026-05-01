@@ -6,7 +6,6 @@ namespace App\Support;
 
 use InvalidArgumentException;
 use Symfony\Component\Uid\Uuid;
-use Symfony\Component\Uid\UuidV7;
 
 /**
  * Hearth wire-format helpers for app-defined prefixes (inst_, ticket_, comment_).
@@ -23,7 +22,8 @@ final class HearthIds
             throw new InvalidArgumentException("Unsupported Hearth prefix: $prefix");
         }
         $uuid = Uuid::v7()->toRfc4122();
-        return $prefix . '_' . str_replace('-', '', $uuid);
+
+        return $prefix.'_'.str_replace('-', '', $uuid);
     }
 
     public static function toUuid(string $wireId): string
@@ -36,12 +36,13 @@ final class HearthIds
         if (strlen($hex) !== 32 || ! ctype_xdigit($hex)) {
             throw new InvalidArgumentException("Malformed Hearth id payload: $wireId");
         }
-        return substr($hex, 0, 8) . '-' . substr($hex, 8, 4) . '-' . substr($hex, 12, 4)
-            . '-' . substr($hex, 16, 4) . '-' . substr($hex, 20);
+
+        return substr($hex, 0, 8).'-'.substr($hex, 8, 4).'-'.substr($hex, 12, 4)
+            .'-'.substr($hex, 16, 4).'-'.substr($hex, 20);
     }
 
     public static function fromUuid(string $prefix, string $uuid): string
     {
-        return $prefix . '_' . str_replace('-', '', $uuid);
+        return $prefix.'_'.str_replace('-', '', $uuid);
     }
 }

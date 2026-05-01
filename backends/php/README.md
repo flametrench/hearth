@@ -1,7 +1,9 @@
 # PHP backend (Laravel)
 
-The PHP/Laravel port of Hearth. Implements the install wizard against the
-Flametrench v0.2 PHP SDKs; customer and agent flows are M3-continued.
+The PHP/Laravel port of Hearth. Feature parity with the Node backend for
+all demo flows: install wizard, customer flow (submit/view/reply with
+auto-reopen), agent flow (inbox/comment/assign/resolve/reopen/share-mint/
+share-revoke), and the v1 spec subset the SPA needs.
 
 | Item           | Value                                                             |
 | -------------- | ----------------------------------------------------------------- |
@@ -28,6 +30,7 @@ From the repo root:
 docker compose up -d                      # mailpit + 4 Postgres
 cd backends/php
 composer install                          # if a fresh checkout
+cp .env.example .env                      # if .env doesn't exist
 php artisan hearth:apply-schema           # one-time, idempotent
 php artisan serve --port=5002
 ```
@@ -38,39 +41,50 @@ Both checks are idempotent (skip if `usr` / `ticket` table exists).
 
 ## Endpoints landed
 
-| Route                      | Auth   | Status |
-| -------------------------- | ------ | ------ |
-| `GET  /healthz`            | public | live   |
-| `GET  /app/install/status` | public | live   |
-| `POST /app/install`        | public | live   |
+### Install (public)
 
-The install wizard uses `DB::transaction` around `PostgresIdentityStore` +
-`PostgresTupleStore` operations and a raw `INSERT INTO inst` — atomic
-multi-SDK bootstrap (ADR 0013) demonstrated in PHP/Laravel.
+| Route                      | Status                                       |
+| -------------------------- | -------------------------------------------- |
+| `GET  /healthz`            | live                                         |
+| `GET  /app/install/status` | live                                         |
+| `POST /app/install`        | live — atomic multi-SDK bootstrap (ADR 0013) |
 
-## Smoke test
+### v1 spec subset (hand-rolled — `flametrench/laravel` doesn't ship HTTP routes)
 
-```bash
-curl -X POST http://localhost:5002/app/install \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "sysadmin_email": "you@example.com",
-    "sysadmin_password": "correcthorsebatterystaple",
-    "sysadmin_display_name": "You",
-    "mfa_policy": "off"
-  }'
-```
+| Route                         | Auth    | Purpose                                 |
+| ----------------------------- | ------- | --------------------------------------- |
+| `POST /v1/users`              | public  | createUser                              |
+| `POST /v1/credentials`        | public  | createPasswordCredential                |
+| `POST /v1/credentials/verify` | public  | verifyPassword → returns usr_id+cred_id |
+| `POST /v1/sessions`           | public  | createSession → returns token           |
+| `POST /v1/orgs`               | session | createOrg (auto-bootstraps owner mem)   |
 
-Response shape matches the Node backend exactly:
+### Customer flow (share-bearer)
 
-```json
-{
-    "inst": { "id": "inst_<32hex>", "mfa_policy": "off" },
-    "sysadmin": { "id": "usr_<32hex>", "email": "you@example.com", "display_name": "You" }
-}
-```
+| Route                        | Status                                                |
+| ---------------------------- | ----------------------------------------------------- |
+| `POST /app/tickets/submit`   | public — emails share link via mailpit                |
+| `GET  /app/customer/ticket`  | live                                                  |
+| `POST /app/customer/comment` | live — auto-reopens resolved tickets, notifies admins |
 
-A second call returns `409 already_installed`.
+### Agent flow (session-bearer)
+
+| Route                                  | Status                                   |
+| -------------------------------------- | ---------------------------------------- |
+| `GET  /app/orgs/:slug/tickets`         | live — status filter, updated_at DESC    |
+| `POST /app/orgs/:org_id/settings`      | live — admins only (name + slug update)  |
+| `GET  /app/tickets/:ticket_id`         | live — ticket + comments + active shares |
+| `POST /app/tickets/:ticket_id/comment` | live — agent comment, auto open→pending  |
+| `POST /app/tickets/:ticket_id/assign`  | live — write (assignee, ticket) tuple    |
+| `POST /app/tickets/:ticket_id/resolve` | live                                     |
+| `POST /app/tickets/:ticket_id/reopen`  | live                                     |
+| `POST /app/tickets/:ticket_id/share`   | live — admins only                       |
+| `POST /app/shares/:shr_id/revoke`      | live — admins only                       |
+
+## CORS
+
+`config/cors.php` permits all origins on `app/*`, `v1/*`, and `healthz`.
+Suitable for the SPA's demo cross-origin flows; tighten in production.
 
 ## Reset state
 
@@ -80,16 +94,24 @@ docker compose up -d
 php artisan hearth:apply-schema
 ```
 
-## TODO — M3-continued
+## Smoke-tested
 
-The Node backend's customer + agent surfaces are not yet ported:
+Every endpoint above has been smoke-tested end-to-end against
+`postgres-php` (port 5502) + mailpit. Mail subjects match the Node
+backend exactly (e.g. "Ticket reopened by customer reply — &lt;subject&gt;").
 
-- `POST /app/tickets/submit` (public)
-- `GET /app/customer/ticket`, `POST /app/customer/comment` (share-bearer)
-- `GET /app/orgs/:slug/tickets`, `GET /app/tickets/:id`, `POST /app/tickets/:id/{comment,assign,resolve,reopen,share}`, `POST /app/shares/:id/revoke` (session-bearer)
-- `POST /app/orgs/:org_id/settings`
-- Mail integration (Laravel Mail facade pointed at mailpit)
-- CORS for SPA origin
-- Playwright suite green at `WEB_URL=…` and `FT_API_URL=http://localhost:5002`
+## Mail config gotcha
 
-Status matrix at the repo root README reflects this gap.
+`MAIL_HOST=localhost` in `.env`. Setting it to `127.0.0.1` causes a
+"Connection timed out" on macOS even though mailpit is bound to both
+0.0.0.0:1025 and [::]:1025 — Symfony Mailer's IPv4 connection attempt
+hangs. Using `localhost` resolves correctly.
+
+## TODO — remaining
+
+- Playwright suite parametric across `FT_API_URL=http://localhost:5002`
+  to assert wire-equivalence with the Node backend
+- CI job (`.github/workflows/ci.yml`) that runs the full Playwright
+  suite against the PHP backend in addition to Node
+- Optional: more of the v1 spec routes if the SPA grows to need them
+  (memberships, invitations, cred rotation, etc.)

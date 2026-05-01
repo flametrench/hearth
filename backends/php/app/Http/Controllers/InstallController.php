@@ -16,6 +16,7 @@ class InstallController
     public function status(): JsonResponse
     {
         $count = (int) DB::scalar('SELECT COUNT(*) FROM inst');
+
         return response()->json(['installed' => $count > 0]);
     }
 

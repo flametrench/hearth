@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class HearthApplySchema extends Command
 {
     protected $signature = 'hearth:apply-schema';
+
     protected $description = 'Apply Flametrench v0.2 schema + Hearth schema to the configured database (idempotent).';
 
     public function handle(): int
@@ -17,6 +18,7 @@ class HearthApplySchema extends Command
         $base = realpath(base_path('../../shared/sql'));
         if ($base === false) {
             $this->error('shared/sql directory not found');
+
             return self::FAILURE;
         }
 
@@ -25,7 +27,7 @@ class HearthApplySchema extends Command
         );
         if (! $usrExists) {
             $this->info('Applying flametrench-schema.sql');
-            DB::unprepared(file_get_contents($base . '/flametrench-schema.sql'));
+            DB::unprepared(file_get_contents($base.'/flametrench-schema.sql'));
         } else {
             $this->info('flametrench schema already present, skipping');
         }
@@ -35,12 +37,13 @@ class HearthApplySchema extends Command
         );
         if (! $ticketExists) {
             $this->info('Applying hearth-schema.sql');
-            DB::unprepared(file_get_contents($base . '/hearth-schema.sql'));
+            DB::unprepared(file_get_contents($base.'/hearth-schema.sql'));
         } else {
             $this->info('hearth schema already present, skipping');
         }
 
         $this->info('Done.');
+
         return self::SUCCESS;
     }
 }
