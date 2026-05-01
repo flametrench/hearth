@@ -124,19 +124,17 @@ REUSE_SERVERS=1 \
   pnpm test
 ```
 
-Result on 2026-05-01: **11/12 tests pass.** The single remaining failure
-(`customer reply via SPA appends a comment and notifies admins`) checks
-mailpit for an admin-notification email after a SPA-driven customer reply.
-The flow works correctly when exercised manually via `curl` (verified —
-email captured in mailpit, comment row inserted, ticket auto-reopens),
-but the SPA-driven path fails to insert the comment in the e2e
-context. Suspected cause: a Playwright/browser interaction that doesn't
-reproduce via curl (under investigation). Not a backend correctness gap.
+Result on 2026-05-01: **12/12 tests pass.** The customer-reply assertion
+uses `expect.poll(...)` against mailpit because PHP's Symfony Mailer
+returns from `Mail::raw` before mailpit's SMTP daemon has indexed the
+message; the original synchronous assertion raced ingestion and saw
+the message ~95% of the time. Polling cleanly handles both backends.
+
+CI parity: `.github/workflows/ci.yml` has a `php-e2e` job that runs the
+full Playwright suite against the PHP backend on port 5002, in addition
+to the existing `node-e2e` job at port 5001.
 
 ## TODO — remaining
 
-- Resolve the 1 flaky e2e test (likely SPA-side or Playwright timing)
-- CI job (`.github/workflows/ci.yml`) that runs the full Playwright
-  suite against the PHP backend in addition to Node
 - Optional: more of the v1 spec routes if the SPA grows to need them
   (memberships, invitations, cred rotation, etc.)

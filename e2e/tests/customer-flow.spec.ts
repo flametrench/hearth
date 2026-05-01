@@ -53,11 +53,21 @@ test('customer can view ticket via share-bearer auth on the SPA', async ({ page 
 
 test('customer reply via SPA appends a comment and notifies admins', async ({ page }) => {
   await page.goto(`/share/${TOKEN_FROM_URL}`);
+  await expect(page.getByTestId('share-view')).toBeVisible();
   await page.getByTestId('share-reply-body').fill('Any update?');
   await page.getByTestId('share-reply-submit').click();
   await expect(page.getByText('Any update?')).toBeVisible();
 
-  const messages = await listMailpitMessages();
-  const found = messages.some((m) => m.Subject.includes('New customer reply'));
-  expect(found).toBe(true);
+  // Poll mailpit until the admin notification arrives. PHP's Symfony Mailer
+  // returns from Mail::raw before mailpit's SMTP daemon has indexed the
+  // message; without polling, the assertion races SMTP ingestion.
+  await expect
+    .poll(
+      async () => {
+        const messages = await listMailpitMessages();
+        return messages.some((m) => m.Subject.includes('New customer reply'));
+      },
+      { timeout: 5_000 },
+    )
+    .toBe(true);
 });

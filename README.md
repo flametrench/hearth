@@ -36,8 +36,8 @@ Pick one and follow its README.
 
 | Backend | Status                                         | Framework | Port | README                                         |
 | ------- | ---------------------------------------------- | --------- | ---- | ---------------------------------------------- |
-| Node    | ✅ live (M2 e2e green)                         | Fastify   | 5001 | [`backends/node`](backends/node/README.md)     |
-| PHP     | ✅ live — feature parity (Playwright TODO)     | Laravel   | 5002 | [`backends/php`](backends/php/README.md)       |
+| Node    | ✅ live — 12/12 Playwright green               | Fastify   | 5001 | [`backends/node`](backends/node/README.md)     |
+| PHP     | ✅ live — 12/12 Playwright green               | Laravel   | 5002 | [`backends/php`](backends/php/README.md)       |
 | Python  | 🔒 M4 — gated on PyPI publish unblock          | FastAPI   | 5003 | [`backends/python`](backends/python/README.md) |
 | Java    | 🔒 M5 — gated on Maven Central publish unblock | Javalin   | 5004 | [`backends/java`](backends/java/README.md)     |
 
@@ -104,21 +104,23 @@ Suites: `customer-flow`, `agent-flow`, `admin-flow`, `adr-0013-bootstrap`.
 
 ## Status
 
-| Milestone                               | Status                                                     |
-| --------------------------------------- | ---------------------------------------------------------- |
-| M0 — repo skeleton                      | ✅ done                                                    |
-| M1 — Node backend + SPA + 14 routes     | ✅ done                                                    |
-| M2 — Playwright e2e + first GitHub push | ✅ done — 12 tests green                                   |
-| M3 — PHP/Laravel backend                | ✅ install + customer + agent live; Playwright parity TODO |
-| M4 — Python/FastAPI                     | 🔒 blocked on PyPI publish                                 |
-| M5 — Java/Javalin                       | 🔒 blocked on Maven Central publish                        |
-| M6 — CI matrix + final polish           | ✅ done — Node e2e + PHP install smoke in CI               |
+| Milestone                               | Status                                       |
+| --------------------------------------- | -------------------------------------------- |
+| M0 — repo skeleton                      | ✅ done                                      |
+| M1 — Node backend + SPA + 14 routes     | ✅ done                                      |
+| M2 — Playwright e2e + first GitHub push | ✅ done — 12 tests green                     |
+| M3 — PHP/Laravel backend                | ✅ done — 12/12 Playwright parity with Node  |
+| M4 — Python/FastAPI                     | 🔒 blocked on PyPI publish                   |
+| M5 — Java/Javalin                       | 🔒 blocked on Maven Central publish          |
+| M6 — CI matrix + final polish           | ✅ done — Node e2e + PHP install smoke in CI |
 
-CI: `.github/workflows/ci.yml` runs on every push/PR. Three jobs:
+CI: `.github/workflows/ci.yml` runs on every push/PR. Four jobs:
 `lint-and-build` (typecheck + lint + format check), `node-e2e` (Postgres +
-mailpit services + Playwright suite), and `php-install-smoke` (Postgres
-service + apply schema + curl install). Python and Java jobs land when
-the PyPI / Maven Central publish blocks unblock.
+mailpit + Playwright suite against Node @ :5001), `php-install-smoke`
+(Postgres + apply schema + curl install at :5002), and `php-e2e`
+(Postgres + mailpit + Playwright suite against PHP @ :5002 — full
+wire-equivalence with Node). Python and Java jobs land when the
+PyPI / Maven Central publish blocks unblock.
 
 For the full milestone plan see internal doc `hearth-plan.md`.
 

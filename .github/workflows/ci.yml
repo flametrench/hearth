@@ -126,6 +126,91 @@ jobs:
           echo "$RESP"
           echo "$RESP" | grep -q '"id":"inst_'
 
+  php-e2e:
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: hearth
+          POSTGRES_PASSWORD: hearth
+          POSTGRES_DB: hearth
+        ports:
+          - 5502:5432
+        options: >-
+          --health-cmd "pg_isready -U hearth -d hearth"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      mailpit:
+        image: axllent/mailpit:v1.21
+        ports:
+          - 1025:1025
+          - 8025:8025
+        options: >-
+          --health-cmd "wget -q -O - http://localhost:8025/api/v1/info >/dev/null || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_pgsql, sodium
+          coverage: none
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - working-directory: backends/php
+        run: composer install --no-interaction --prefer-dist
+      - working-directory: backends/php
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5502'
+          DB_DATABASE: hearth
+          DB_USERNAME: hearth
+          DB_PASSWORD: hearth
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan hearth:apply-schema
+      - run: pnpm install --frozen-lockfile
+      - run: cd e2e && pnpm exec playwright install --with-deps chromium
+      - working-directory: backends/php
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5502'
+          DB_DATABASE: hearth
+          DB_USERNAME: hearth
+          DB_PASSWORD: hearth
+          MAIL_HOST: localhost
+          MAIL_PORT: '1025'
+        run: php artisan serve --port=5002 &
+      - working-directory: web
+        env:
+          VITE_FT_API_URL: http://localhost:5002
+        run: pnpm dev &
+      - run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5002/healthz > /dev/null && curl -sf http://localhost:3000 > /dev/null; then break; fi
+            sleep 1
+          done
+      - working-directory: e2e
+        env:
+          REUSE_SERVERS: '1'
+          FT_API_URL: http://localhost:5002
+          WEB_URL: http://localhost:3000
+          DATABASE_URL: postgres://hearth:hearth@localhost:5502/hearth
+        run: pnpm test
+
   # Python (M4) and Java (M5) jobs land once flametrench-{ids,identity,tenancy,authz}
   # are published on PyPI / Maven Central. See backends/python/README.md and
   # backends/java/README.md for the local-wheel / mvn-install fallback paths
