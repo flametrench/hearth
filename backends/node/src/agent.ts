@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { Pool } from 'pg';
 import type { IdentityStore } from '@flametrench/identity';
+import type { TenancyStore } from '@flametrench/tenancy';
 import type { ShareStore, TupleStore } from '@flametrench/authz';
 import { buildBearerAuthHook, requireSession } from '@flametrench/server';
 
@@ -18,6 +19,7 @@ type TicketStatus = 'open' | 'pending' | 'resolved';
 export interface AgentContext {
   pool: Pool;
   identityStore: IdentityStore;
+  tenancyStore: TenancyStore;
   tupleStore: TupleStore;
   shareStore: ShareStore;
   mailer: Mailer;
@@ -252,11 +254,9 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
             .send({ error: { code: 'invalid_request', message: 'body is required' } });
         }
         if (body.body.length > 20_000) {
-          return reply
-            .code(400)
-            .send({
-              error: { code: 'invalid_request', message: 'body must be 20000 characters or fewer' },
-            });
+          return reply.code(400).send({
+            error: { code: 'invalid_request', message: 'body must be 20000 characters or fewer' },
+          });
         }
 
         const ticketUuid = uuidFromHearthId(request.params.ticket_id);
@@ -324,14 +324,12 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
         const session = requireSession(request);
         const assigneeWire = request.body?.assignee_usr_id;
         if (typeof assigneeWire !== 'string' || !assigneeWire.startsWith('usr_')) {
-          return reply
-            .code(400)
-            .send({
-              error: {
-                code: 'invalid_request',
-                message: 'assignee_usr_id must be a usr_<32hex> id',
-              },
-            });
+          return reply.code(400).send({
+            error: {
+              code: 'invalid_request',
+              message: 'assignee_usr_id must be a usr_<32hex> id',
+            },
+          });
         }
 
         const ticketUuid = uuidFromHearthId(request.params.ticket_id);
@@ -355,11 +353,9 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
           ORG_ROLE_RELATIONS,
         );
         if (!assigneeOk) {
-          return reply
-            .code(400)
-            .send({
-              error: { code: 'invalid_assignee', message: 'Assignee is not a member of this org' },
-            });
+          return reply.code(400).send({
+            error: { code: 'invalid_assignee', message: 'Assignee is not a member of this org' },
+          });
         }
 
         try {
@@ -449,11 +445,9 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
         const orgWire = uuidToWire('org', ticket.org_id);
         const adminOk = await checkOrgRole(ctx, session.usrId, orgWire, ORG_ADMIN_RELATIONS);
         if (!adminOk) {
-          return reply
-            .code(403)
-            .send({
-              error: { code: 'forbidden', message: 'Only org admins can mint share tokens' },
-            });
+          return reply.code(403).send({
+            error: { code: 'forbidden', message: 'Only org admins can mint share tokens' },
+          });
         }
 
         const { share, token } = await ctx.shareStore.createShare({
@@ -481,6 +475,38 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
       },
     );
 
+    instance.post<{
+      Params: { org_id: string };
+      Body: { name?: string | null; slug?: string | null };
+    }>('/orgs/:org_id/settings', async (request, reply) => {
+      const session = requireSession(request);
+      const orgWire = request.params.org_id;
+      if (!orgWire.startsWith('org_')) {
+        return reply
+          .code(400)
+          .send({ error: { code: 'invalid_request', message: 'Path must be an org_<32hex> id' } });
+      }
+      const adminOk = await checkOrgRole(
+        ctx,
+        session.usrId,
+        orgWire as `org_${string}`,
+        ORG_ADMIN_RELATIONS,
+      );
+      if (!adminOk) {
+        return reply
+          .code(403)
+          .send({ error: { code: 'forbidden', message: 'Only org admins can update settings' } });
+      }
+      const body = request.body ?? {};
+      const update: { orgId: `org_${string}`; name?: string | null; slug?: string | null } = {
+        orgId: orgWire as `org_${string}`,
+      };
+      if ('name' in body) update.name = body.name ?? null;
+      if ('slug' in body) update.slug = body.slug ?? null;
+      const updated = await ctx.tenancyStore.updateOrg(update);
+      return reply.send({ org: updated });
+    });
+
     instance.post<{ Params: { shr_id: string } }>(
       '/shares/:shr_id/revoke',
       async (request, reply) => {
@@ -498,11 +524,9 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
             .send({ error: { code: 'share_not_found', message: 'Share not found' } });
         }
         if (share.objectType !== 'ticket') {
-          return reply
-            .code(400)
-            .send({
-              error: { code: 'wrong_resource', message: 'Share does not reference a ticket' },
-            });
+          return reply.code(400).send({
+            error: { code: 'wrong_resource', message: 'Share does not reference a ticket' },
+          });
         }
         const ticketUuid = (() => {
           if (

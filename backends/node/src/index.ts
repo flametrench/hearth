@@ -39,7 +39,14 @@ async function main(): Promise<void> {
     async (instance) => {
       registerInstallRoute(instance, { pool });
       registerCustomerRoutes(instance, { pool, shareStore, mailer });
-      registerAgentRoutes(instance, { pool, identityStore, tupleStore, shareStore, mailer });
+      registerAgentRoutes(instance, {
+        pool,
+        identityStore,
+        tenancyStore,
+        tupleStore,
+        shareStore,
+        mailer,
+      });
     },
     { prefix: '/app' },
   );
