@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/cors": "^10.0.2",
     "@flametrench/authz": "0.2.0",
     "@flametrench/identity": "0.2.0",
     "@flametrench/ids": "0.2.0",

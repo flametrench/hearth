@@ -1,3 +1,4 @@
+import cors from '@fastify/cors';
 import { createFlametrenchServer } from '@flametrench/server';
 import { PostgresIdentityStore } from '@flametrench/identity/postgres';
 import { PostgresTenancyStore } from '@flametrench/tenancy/postgres';
@@ -33,6 +34,12 @@ async function main(): Promise<void> {
     identityStore,
     tenancyStore,
     tupleStore,
+  });
+
+  await app.register(cors, {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: false,
   });
 
   await app.register(

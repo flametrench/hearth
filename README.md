@@ -34,12 +34,12 @@ A complete ADR coverage matrix lives in `~/Documents/FlameTrench/hearth-plan.md`
 Each backend implements the same routes against the same OpenAPI document.
 Pick one and follow its README.
 
-| Backend | Status                                      | Framework | Port | README                                         |
-| ------- | ------------------------------------------- | --------- | ---- | ---------------------------------------------- |
-| Node    | M1 — in progress                            | Fastify   | 5001 | [`backends/node`](backends/node/README.md)     |
-| PHP     | M3 — planned                                | Laravel   | 5002 | [`backends/php`](backends/php/README.md)       |
-| Python  | M4 — gated on PyPI publish unblock          | FastAPI   | 5003 | [`backends/python`](backends/python/README.md) |
-| Java    | M5 — gated on Maven Central publish unblock | Javalin   | 5004 | [`backends/java`](backends/java/README.md)     |
+| Backend | Status                                         | Framework | Port | README                                         |
+| ------- | ---------------------------------------------- | --------- | ---- | ---------------------------------------------- |
+| Node    | ✅ live (M2 e2e green)                         | Fastify   | 5001 | [`backends/node`](backends/node/README.md)     |
+| PHP     | 🚧 M3 — next up                                | Laravel   | 5002 | [`backends/php`](backends/php/README.md)       |
+| Python  | 🔒 M4 — gated on PyPI publish unblock          | FastAPI   | 5003 | [`backends/python`](backends/python/README.md) |
+| Java    | 🔒 M5 — gated on Maven Central publish unblock | Javalin   | 5004 | [`backends/java`](backends/java/README.md)     |
 
 The React SPA in [`web/`](web/) is backend-agnostic; point `FT_API_URL` at
 whichever backend port you brought up.
@@ -92,12 +92,29 @@ HEARTH_SPEC_TAG=v0.3.0 ./shared/openapi/refresh.sh
 This is the same `raw.githubusercontent.com` path an external adopter would
 use — no internal shortcuts.
 
+## End-to-end tests
+
+```bash
+cd e2e
+pnpm install-browsers       # one-time Playwright Chromium
+pnpm test                   # boots backend + SPA, runs all suites
+```
+
+Suites: `customer-flow`, `agent-flow`, `admin-flow`, `adr-0013-bootstrap`.
+
 ## Status
 
-Milestone 0 (repo skeleton) — done.
-Milestone 1 (Node backend + SPA shell) — next.
+| Milestone                               | Status                      |
+| --------------------------------------- | --------------------------- |
+| M0 — repo skeleton                      | ✅ done                     |
+| M1 — Node backend + SPA + 14 routes     | ✅ done                     |
+| M2 — Playwright e2e + first GitHub push | ✅ done                     |
+| M3 — PHP/Laravel backend                | next                        |
+| M4 — Python/FastAPI (PyPI-gated)        | blocked on registry publish |
+| M5 — Java/Javalin (Maven-gated)         | blocked on registry publish |
+| M6 — CI matrix + final polish           | last                        |
 
-For the full milestone plan see `~/Documents/FlameTrench/hearth-plan.md`.
+For the full milestone plan see internal doc `hearth-plan.md`.
 
 ## License
 
