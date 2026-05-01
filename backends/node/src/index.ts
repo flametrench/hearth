@@ -8,6 +8,7 @@ import { createPool } from './db.js';
 import { ensureSchema } from './schema.js';
 import { registerInstallRoute } from './install.js';
 import { registerCustomerRoutes } from './customer.js';
+import { registerAgentRoutes } from './agent.js';
 import { Mailer } from './email.js';
 
 async function main(): Promise<void> {
@@ -38,6 +39,7 @@ async function main(): Promise<void> {
     async (instance) => {
       registerInstallRoute(instance, { pool });
       registerCustomerRoutes(instance, { pool, shareStore, mailer });
+      registerAgentRoutes(instance, { pool, identityStore, tupleStore, shareStore, mailer });
     },
     { prefix: '/app' },
   );

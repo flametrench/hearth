@@ -172,11 +172,9 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
 
     const org = await findOrgBySlug(ctx.pool, body.org_slug);
     if (!org) {
-      return reply
-        .code(404)
-        .send({
-          error: { code: 'org_not_found', message: `No active org with slug '${body.org_slug}'` },
-        });
+      return reply.code(404).send({
+        error: { code: 'org_not_found', message: `No active org with slug '${body.org_slug}'` },
+      });
     }
 
     const installedBy = await getInstalledByUuid(ctx.pool);
@@ -234,11 +232,9 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
     instance.get('/customer/ticket', async (request, reply) => {
       const verified = request.verifiedShare!;
       if (verified.objectType !== 'ticket') {
-        return reply
-          .code(403)
-          .send({
-            error: { code: 'wrong_resource', message: 'Share does not authorize a ticket view' },
-          });
+        return reply.code(403).send({
+          error: { code: 'wrong_resource', message: 'Share does not authorize a ticket view' },
+        });
       }
       const ticketUuid = normalizeObjectIdToUuid(verified.objectId);
       const ticket = await loadTicketByUuid(ctx.pool, ticketUuid);
@@ -266,11 +262,9 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
       }
       const verified = request.verifiedShare!;
       if (verified.objectType !== 'ticket') {
-        return reply
-          .code(403)
-          .send({
-            error: { code: 'wrong_resource', message: 'Share does not authorize a ticket reply' },
-          });
+        return reply.code(403).send({
+          error: { code: 'wrong_resource', message: 'Share does not authorize a ticket reply' },
+        });
       }
       const ticketUuid = normalizeObjectIdToUuid(verified.objectId);
 
