@@ -19,11 +19,13 @@
     "@flametrench/server": "0.0.1",
     "@flametrench/tenancy": "0.2.0",
     "fastify": "^5.0.0",
+    "nodemailer": "^6.9.16",
     "pg": "^8.13.0",
     "uuid": "^11.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/nodemailer": "^6.4.17",
     "@types/pg": "^8.11.10",
     "tsx": "^4.19.0",
     "typescript": "^5.7.2"

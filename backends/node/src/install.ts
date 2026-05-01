@@ -75,11 +75,9 @@ export function registerInstallRoute(app: FastifyInstance, ctx: InstallContext):
     }
 
     if (await isInstalled(ctx.pool)) {
-      return reply
-        .code(409)
-        .send({
-          error: { code: 'already_installed', message: 'Hearth has already been installed' },
-        });
+      return reply.code(409).send({
+        error: { code: 'already_installed', message: 'Hearth has already been installed' },
+      });
     }
 
     const client: PoolClient = await ctx.pool.connect();
