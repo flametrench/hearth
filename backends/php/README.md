@@ -41,13 +41,20 @@ Both checks are idempotent (skip if `usr` / `ticket` table exists).
 
 ## Endpoints landed
 
-### Install (public)
+### Install + onboarding (public)
 
-| Route                      | Status                                       |
-| -------------------------- | -------------------------------------------- |
-| `GET  /healthz`            | live                                         |
-| `GET  /app/install/status` | live                                         |
-| `POST /app/install`        | live — atomic multi-SDK bootstrap (ADR 0013) |
+| Route                      | Status                                                     |
+| -------------------------- | ---------------------------------------------------------- |
+| `GET  /healthz`            | live                                                       |
+| `GET  /app/install/status` | live                                                       |
+| `POST /app/install`        | live — atomic multi-SDK bootstrap (ADR 0013)               |
+| `POST /app/onboard`        | live — creates usr+cred+org+session in one DB::transaction |
+
+`/app/onboard` replaces the SPA's previous 6-call signup chain
+(POST /v1/users → /v1/credentials → /v1/credentials/verify → /v1/sessions →
+/v1/orgs → /app/orgs/:id/settings). Fully atomic via Laravel
+`DB::transaction` plus the PHP SDKs' `nested()` SAVEPOINT cooperation —
+all rows commit together or none at all.
 
 ### v1 spec subset (hand-rolled — `flametrench/laravel` doesn't ship HTTP routes)
 

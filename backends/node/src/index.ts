@@ -8,6 +8,7 @@ import { loadEnv } from './env.js';
 import { createPool } from './db.js';
 import { ensureSchema } from './schema.js';
 import { registerInstallRoute } from './install.js';
+import { registerOnboardRoute } from './onboard.js';
 import { registerCustomerRoutes } from './customer.js';
 import { registerAgentRoutes } from './agent.js';
 import { Mailer } from './email.js';
@@ -45,6 +46,7 @@ async function main(): Promise<void> {
   await app.register(
     async (instance) => {
       registerInstallRoute(instance, { pool });
+      registerOnboardRoute(instance, { pool });
       registerCustomerRoutes(instance, { pool, shareStore, mailer });
       registerAgentRoutes(instance, {
         pool,

@@ -1,23 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, ApiError, setSession, setActiveOrgSlug } from '../api.js';
+import { ApiError, api, setActiveOrgSlug, setSession } from '../api.js';
 
-interface UserResponse {
-  id: string;
-}
-interface CredResponse {
-  id: string;
-}
-interface VerifyResponse {
-  usr_id: string;
-  cred_id: string;
-}
-interface SessionResponse {
-  token: string;
-  session: { expiresAt: string };
-}
-interface OrgResponse {
-  org: { id: string };
+interface OnboardResponse {
+  usr: { id: string; display_name: string; email: string };
+  org: { id: string; name: string; slug: string };
+  session: { id: string; token: string; expires_at: string };
 }
 
 export function Signup() {
@@ -35,42 +23,22 @@ export function Signup() {
     setBusy(true);
     setErr(null);
     try {
-      const usr = await api<UserResponse>('/v1/users', {
+      const result = await api<OnboardResponse>('/app/onboard', {
         method: 'POST',
-        body: {},
-      });
-      await api<CredResponse>('/v1/credentials', {
-        method: 'POST',
-        body: { usr_id: usr.id, type: 'password', identifier: email, password },
-      });
-      // updateUser display_name (PATCH /v1/users/:id) — not exposed by server v0.0.1; skip for demo
-
-      const verify = await api<VerifyResponse>('/v1/credentials/verify', {
-        method: 'POST',
-        body: { type: 'password', identifier: email, proof: { password } },
-      });
-      const session = await api<SessionResponse>('/v1/sessions', {
-        method: 'POST',
-        body: { usr_id: verify.usr_id, cred_id: verify.cred_id, ttl_seconds: 3600 },
+        body: {
+          display_name: displayName,
+          email,
+          password,
+          org_name: orgName,
+          org_slug: orgSlug,
+        },
       });
       setSession({
-        token: session.token,
-        usr_id: verify.usr_id,
-        expires_at: session.session.expiresAt,
+        token: result.session.token,
+        usr_id: result.usr.id,
+        expires_at: result.session.expires_at,
       });
-
-      const org = await api<OrgResponse>('/v1/orgs', {
-        method: 'POST',
-        body: {},
-        bearer: 'session',
-      });
-      await api('/app/orgs/' + org.org.id + '/settings', {
-        method: 'POST',
-        body: { name: orgName, slug: orgSlug },
-        bearer: 'session',
-      });
-      setActiveOrgSlug(orgSlug);
-      void displayName;
+      setActiveOrgSlug(result.org.slug);
       navigate('/inbox');
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Sign-up failed');
@@ -82,6 +50,9 @@ export function Signup() {
   return (
     <div className="max-w-md py-8">
       <h1 className="text-2xl font-semibold">Create a support team</h1>
+      <p className="mt-1 text-sm text-zinc-500">
+        Atomic onboarding — one transaction creates user + credential + org + session.
+      </p>
       <form onSubmit={onSubmit} className="mt-6 space-y-3" data-testid="signup-form">
         <Input
           label="Your name"

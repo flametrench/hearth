@@ -46,16 +46,34 @@ contract — every route in the v0.1 + v0.2 OpenAPI is live.
 
 ### Hearth surface (`/app/*`)
 
-| Route                      | Auth   | Status    |
-| -------------------------- | ------ | --------- |
-| `GET  /app/install/status` | public | live (M1) |
-| `POST /app/install`        | public | live (M1) |
+Install + onboarding (public):
+
+| Route                      | Status                                          |
+| -------------------------- | ----------------------------------------------- |
+| `GET  /app/install/status` | live                                            |
+| `POST /app/install`        | live — atomic multi-SDK bootstrap (ADR 0013)    |
+| `POST /app/onboard`        | live — creates usr+cred+org+session in one call |
+
+Customer flow (share-bearer): `POST /app/tickets/submit` (public),
+`GET /app/customer/ticket`, `POST /app/customer/comment`.
+
+Agent flow (session-bearer): `GET /app/orgs/:slug/tickets`,
+`GET /app/tickets/:id`, `POST /app/tickets/:id/{comment,assign,resolve,reopen,share}`,
+`POST /app/shares/:id/revoke`, `POST /app/orgs/:org_id/settings`.
 
 The install wizard is the load-bearing **ADR 0013** demo: one `PoolClient`
 backs all four SDKs across one transaction, atomically writing the first
 `usr` + `cred` + `inst` row + `(usr, sysadmin, inst)` tuple.
 
-Customer/agent/admin routes land in subsequent M1 sessions.
+The onboard endpoint replaces the SPA's previous 6-call signup chain with
+a single call. **Note: not fully atomic on Node** because the Node
+`PostgresTenancyStore.createOrg` and `PostgresIdentityStore.createSession`
+internally call `this.pool.connect()` for their own BEGIN/COMMIT, which
+fails when handed a `PoolClient` — so the route pre-checks slug
+uniqueness and runs the SDK calls sequentially against the pool. The PHP
+backend's onboard endpoint IS fully atomic via Laravel's `DB::transaction`
+plus the PHP SDKs' `nested()` SAVEPOINT cooperation. Patching the Node
+SDKs to support caller-owned-transactions is tracked upstream.
 
 ### Misc
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InstallController;
+use App\Http\Controllers\OnboardController;
 use App\Http\Controllers\SpecController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ Route::prefix('app')->group(function () {
     // Install (public)
     Route::get('/install/status', [InstallController::class, 'status']);
     Route::post('/install', [InstallController::class, 'install']);
+
+    // Atomic agent + org onboarding (public — replaces 6-call signup chain)
+    Route::post('/onboard', [OnboardController::class, 'onboard']);
 
     // Public customer submit
     Route::post('/tickets/submit', [CustomerController::class, 'submit']);
