@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
+import { DuplicateCredentialError } from '@flametrench/identity';
 import { PostgresIdentityStore } from '@flametrench/identity/postgres';
+import { OrgSlugConflictError } from '@flametrench/tenancy';
 import { PostgresTenancyStore } from '@flametrench/tenancy/postgres';
 
 const SESSION_TTL_SECONDS = 3600;
@@ -50,18 +52,14 @@ export interface OnboardContext {
 }
 
 /**
- * Sequentially calls identityStore.createUser → createCredential →
- * tenancyStore.createOrg(name+slug) → identityStore.createSession.
+ * Atomic agent + org onboarding via the shared-client pattern. The Node
+ * SDKs at `@flametrench/{identity,tenancy}@^0.2.1` cooperate with a
+ * caller-owned PoolClient via SAVEPOINT/RELEASE for their multi-statement
+ * methods (createOrg, createSession, etc.) — see ADR 0013.
  *
- * Not wrapped in a shared transaction because Node's
- * PostgresTenancyStore.createOrg and PostgresIdentityStore.createSession
- * internally call `this.pool.connect()` for their own BEGIN/COMMIT, which
- * fails when handed a PoolClient. The PHP onboard endpoint is fully
- * atomic — its SDKs use `nested()` and SAVEPOINTs.
- *
- * Pre-checks slug to short-circuit before doing irreversible work; orphan
- * cleanup on later failures is best-effort. See backends/node/README.md
- * for the SDK-gap note.
+ * Sequence: createUser → createPasswordCredential → createOrg(name+slug)
+ * → createSession, all on the same client between BEGIN and COMMIT. If
+ * any step fails, ROLLBACK undoes everything.
  */
 export function registerOnboardRoute(app: FastifyInstance, ctx: OnboardContext): void {
   app.post('/onboard', async (request, reply) => {
@@ -75,64 +73,66 @@ export function registerOnboardRoute(app: FastifyInstance, ctx: OnboardContext):
       throw err;
     }
 
-    const slugTaken = await ctx.pool.query<{ exists: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM org WHERE slug = $1) AS exists`,
-      [body.org_slug],
-    );
-    if (slugTaken.rows[0]?.exists) {
-      return reply.code(409).send({
-        error: { code: 'slug_taken', message: `Org slug '${body.org_slug}' is already taken` },
-      });
-    }
-
-    const identityStore = new PostgresIdentityStore(ctx.pool);
-    const tenancyStore = new PostgresTenancyStore(ctx.pool);
-
-    const usr = await identityStore.createUser({ displayName: body.display_name });
-    let cred;
+    const client: PoolClient = await ctx.pool.connect();
     try {
-      cred = await identityStore.createCredential({
+      await client.query('BEGIN');
+
+      const sharedPool = client as unknown as Pool;
+      const identityStore = new PostgresIdentityStore(sharedPool);
+      const tenancyStore = new PostgresTenancyStore(sharedPool);
+
+      const usr = await identityStore.createUser({ displayName: body.display_name });
+      const cred = await identityStore.createCredential({
         usrId: usr.id,
         type: 'password',
         identifier: body.email,
         password: body.password,
       });
+      const orgResult = await tenancyStore.createOrg({
+        creator: usr.id,
+        name: body.org_name,
+        slug: body.org_slug,
+      });
+      const sessionResult = await identityStore.createSession({
+        usrId: usr.id,
+        credId: cred.id,
+        ttlSeconds: SESSION_TTL_SECONDS,
+      });
+
+      await client.query('COMMIT');
+
+      return reply.code(201).send({
+        usr: {
+          id: usr.id,
+          display_name: body.display_name,
+          email: body.email,
+        },
+        org: {
+          id: orgResult.org.id,
+          name: orgResult.org.name,
+          slug: orgResult.org.slug,
+        },
+        session: {
+          id: sessionResult.session.id,
+          token: sessionResult.token,
+          expires_at: sessionResult.session.expiresAt,
+        },
+      });
     } catch (err) {
-      if (err instanceof Error && /identifier|already exists|conflict/i.test(err.message)) {
+      await client.query('ROLLBACK').catch(() => {});
+      if (err instanceof OrgSlugConflictError) {
+        return reply.code(409).send({
+          error: { code: 'slug_taken', message: `Org slug '${body.org_slug}' is already taken` },
+        });
+      }
+      if (err instanceof DuplicateCredentialError) {
         return reply.code(409).send({
           error: { code: 'email_taken', message: `Email '${body.email}' already has a credential` },
         });
       }
       throw err;
+    } finally {
+      client.release();
     }
-
-    const orgResult = await tenancyStore.createOrg({
-      creator: usr.id,
-      name: body.org_name,
-      slug: body.org_slug,
-    });
-    const sessionResult = await identityStore.createSession({
-      usrId: usr.id,
-      credId: cred.id,
-      ttlSeconds: SESSION_TTL_SECONDS,
-    });
-
-    return reply.code(201).send({
-      usr: {
-        id: usr.id,
-        display_name: body.display_name,
-        email: body.email,
-      },
-      org: {
-        id: orgResult.org.id,
-        name: orgResult.org.name,
-        slug: orgResult.org.slug,
-      },
-      session: {
-        id: sessionResult.session.id,
-        token: sessionResult.token,
-        expires_at: sessionResult.session.expiresAt,
-      },
-    });
   });
 }

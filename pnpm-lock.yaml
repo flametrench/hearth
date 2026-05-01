@@ -4,12 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@flametrench/authz': 0.2.0
-  '@flametrench/identity': 0.2.0
-  '@flametrench/tenancy': 0.2.0
-  '@flametrench/ids': 0.2.0
-
 importers:
 
   .:
@@ -39,20 +33,20 @@ importers:
         specifier: ^10.0.2
         version: 10.1.0
       '@flametrench/authz':
-        specifier: 0.2.0
-        version: 0.2.0(pg@8.20.0)
+        specifier: ^0.2.1
+        version: 0.2.1(pg@8.20.0)
       '@flametrench/identity':
-        specifier: 0.2.0
-        version: 0.2.0(pg@8.20.0)
+        specifier: ^0.2.1
+        version: 0.2.1(pg@8.20.0)
       '@flametrench/ids':
-        specifier: 0.2.0
+        specifier: ^0.2.0
         version: 0.2.0
       '@flametrench/server':
-        specifier: 0.0.1
-        version: 0.0.1(pg@8.20.0)
+        specifier: ^0.0.2
+        version: 0.0.2(pg@8.20.0)
       '@flametrench/tenancy':
-        specifier: 0.2.0
-        version: 0.2.0(pg@8.20.0)
+        specifier: ^0.2.1
+        version: 0.2.1(pg@8.20.0)
       fastify:
         specifier: ^5.0.0
         version: 5.8.5
@@ -597,8 +591,8 @@ packages:
   '@fastify/proxy-addr@5.1.0':
     resolution: {integrity: sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw==}
 
-  '@flametrench/authz@0.2.0':
-    resolution: {integrity: sha512-SvaI0PyjgT57OtP+E38U6tWf7E49hIE0u8exyCi5yLFA5w2fa+wVVakwy+u68OByehqY0YP7f3rNgjD3Kst2EA==}
+  '@flametrench/authz@0.2.1':
+    resolution: {integrity: sha512-YIJNexpYLIcI3LULh7ksllrKgqZfrnFyKWp5vXEvtd+AxePn5A7iSDsJ+Vwe1QAXlWEMfvXDS0sxA+i6tI5/aA==}
     engines: {node: '>=20'}
     peerDependencies:
       pg: ^8.11.0
@@ -606,8 +600,8 @@ packages:
       pg:
         optional: true
 
-  '@flametrench/identity@0.2.0':
-    resolution: {integrity: sha512-3X9UCXe96N9HqYD7gDB847ZC6/lH8Ptwr9FJO608B/PHgKaTQHBohxXFcRCuoLVG58F4VMLHwlaquwhJgbFJfQ==}
+  '@flametrench/identity@0.2.1':
+    resolution: {integrity: sha512-Ggqu2VZ/sRt71I+VO94s2jnKSOXZ+NiuZJN64UtY6MHW/IePrlbOpNB6n/64wVlrZYMWdZAk18xfmCyANjFkNw==}
     engines: {node: '>=20'}
     peerDependencies:
       pg: ^8.11.0
@@ -619,12 +613,12 @@ packages:
     resolution: {integrity: sha512-EFcEwjWrgRRoCObIy3NTHtqbepkZowt3rRRvuvWX/djyHRIvd1y+WIpQ2y+pY6hyxT1/BoJyR/+WXEJx/M/nNg==}
     engines: {node: '>=20'}
 
-  '@flametrench/server@0.0.1':
-    resolution: {integrity: sha512-jVcO3si+2Yl8YzNe9NLnaiId+YbdE7tgQL7Q1obLqW41o3ZipkiuDHfP3KsJwipLWpSW8AU/X07Zl00zsKWd4Q==}
+  '@flametrench/server@0.0.2':
+    resolution: {integrity: sha512-NQox1koIqZKlLeVZRCbR8buYNsPvy+x4vYXaSwvwYYmTweG1rEleBvM9HpNhtSEvDKcHjuetMlLbb+WcBiDD/g==}
     engines: {node: '>=20'}
 
-  '@flametrench/tenancy@0.2.0':
-    resolution: {integrity: sha512-4qd8qFA23E3rxKAaG8c4vuhEWj7xPFlH/VMx2fv/sKFpDxIIB9mVWUr/1VSUo+2GjE41LXgGE+BXiQxfxub19A==}
+  '@flametrench/tenancy@0.2.1':
+    resolution: {integrity: sha512-24XLPob3IaYP10j4g7hUcNxtntiCZfUnb55XuK5wJUw9xmK/h+ooxd4r4iXc5SRQIzuWdUpMxFcRVYDp7lvO9g==}
     engines: {node: '>=20'}
     peerDependencies:
       pg: ^8.11.0
@@ -2260,13 +2254,13 @@ snapshots:
       '@fastify/forwarded': 3.0.1
       ipaddr.js: 2.3.0
 
-  '@flametrench/authz@0.2.0(pg@8.20.0)':
+  '@flametrench/authz@0.2.1(pg@8.20.0)':
     dependencies:
       '@flametrench/ids': 0.2.0
     optionalDependencies:
       pg: 8.20.0
 
-  '@flametrench/identity@0.2.0(pg@8.20.0)':
+  '@flametrench/identity@0.2.1(pg@8.20.0)':
     dependencies:
       '@flametrench/ids': 0.2.0
       argon2: 0.43.1
@@ -2277,16 +2271,16 @@ snapshots:
     dependencies:
       uuid: 14.0.0
 
-  '@flametrench/server@0.0.1(pg@8.20.0)':
+  '@flametrench/server@0.0.2(pg@8.20.0)':
     dependencies:
-      '@flametrench/authz': 0.2.0(pg@8.20.0)
-      '@flametrench/identity': 0.2.0(pg@8.20.0)
-      '@flametrench/tenancy': 0.2.0(pg@8.20.0)
+      '@flametrench/authz': 0.2.1(pg@8.20.0)
+      '@flametrench/identity': 0.2.1(pg@8.20.0)
+      '@flametrench/tenancy': 0.2.1(pg@8.20.0)
       fastify: 5.8.5
     transitivePeerDependencies:
       - pg
 
-  '@flametrench/tenancy@0.2.0(pg@8.20.0)':
+  '@flametrench/tenancy@0.2.1(pg@8.20.0)':
     dependencies:
       '@flametrench/ids': 0.2.0
     optionalDependencies:

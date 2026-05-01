@@ -14,13 +14,8 @@ routes under `/app/*`.
 
 ## SDKs
 
-- `@flametrench/server@0.0.1` — Fastify wiring of v0.1+v0.2 OpenAPI surface
-- `@flametrench/ids@0.2.0`, `@flametrench/identity@0.2.0`, `@flametrench/tenancy@0.2.0`, `@flametrench/authz@0.2.0`
-
-The repo root's `pnpm.overrides` pins `@flametrench/{ids,identity,tenancy,authz}`
-to `0.2.0` to dedupe the rc-versioned transitive deps in
-`@flametrench/server@0.0.1`. Will be unnecessary once `@flametrench/server`
-publishes a v0.2.0-aligned release.
+- `@flametrench/server@^0.0.2` — Fastify wiring of v0.1+v0.2 OpenAPI surface
+- `@flametrench/ids@^0.2.0`, `@flametrench/identity@^0.2.1`, `@flametrench/tenancy@^0.2.1`, `@flametrench/authz@^0.2.1`
 
 ## Run
 
@@ -61,19 +56,11 @@ Agent flow (session-bearer): `GET /app/orgs/:slug/tickets`,
 `GET /app/tickets/:id`, `POST /app/tickets/:id/{comment,assign,resolve,reopen,share}`,
 `POST /app/shares/:id/revoke`, `POST /app/orgs/:org_id/settings`.
 
-The install wizard is the load-bearing **ADR 0013** demo: one `PoolClient`
-backs all four SDKs across one transaction, atomically writing the first
-`usr` + `cred` + `inst` row + `(usr, sysadmin, inst)` tuple.
-
-The onboard endpoint replaces the SPA's previous 6-call signup chain with
-a single call. **Note: not fully atomic on Node** because the Node
-`PostgresTenancyStore.createOrg` and `PostgresIdentityStore.createSession`
-internally call `this.pool.connect()` for their own BEGIN/COMMIT, which
-fails when handed a `PoolClient` — so the route pre-checks slug
-uniqueness and runs the SDK calls sequentially against the pool. The PHP
-backend's onboard endpoint IS fully atomic via Laravel's `DB::transaction`
-plus the PHP SDKs' `nested()` SAVEPOINT cooperation. Patching the Node
-SDKs to support caller-owned-transactions is tracked upstream.
+Both `/app/install` and `/app/onboard` are load-bearing **ADR 0013**
+demos: one `PoolClient` backs every SDK across a single outer
+transaction, with the SDKs cooperating via SAVEPOINT/RELEASE for their
+multi-statement methods (createSession, createOrg). Wire-equivalent
+atomicity to the PHP backend's onboard endpoint.
 
 ### Misc
 

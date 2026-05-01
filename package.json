@@ -22,13 +22,5 @@
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@flametrench/authz": "0.2.0",
-      "@flametrench/identity": "0.2.0",
-      "@flametrench/tenancy": "0.2.0",
-      "@flametrench/ids": "0.2.0"
-    }
   }
 }
