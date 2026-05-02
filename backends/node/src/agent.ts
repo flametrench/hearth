@@ -450,10 +450,15 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AgentContext): vo
           });
         }
 
+        // C2 (security-audit-v0.3.md): must match the relation
+        // customer.ts mints. The customer's verified share carries
+        // this relation and the customer endpoints gate on it. A
+        // mismatch here would silently break the customer flow with a
+        // 'wrong_relation' 403.
         const { share, token } = await ctx.shareStore.createShare({
           objectType: 'ticket',
           objectId: request.params.ticket_id,
-          relation: 'viewer',
+          relation: 'commenter',
           createdBy: session.usrId,
           expiresInSeconds: SHARE_TTL_SECONDS,
         });

@@ -63,10 +63,15 @@ class CustomerController
             );
         });
 
+        // C2 (security-audit-v0.3.md): the share's relation is
+        // load-bearing — verifyShareToken returns it and the adopter
+        // MUST gate write paths on it. 'commenter' (not 'viewer')
+        // because this share authorizes BOTH reading the ticket AND
+        // posting comments. Mirror with the Node backend.
         $result = $this->shareStore->createShare(
             objectType: 'ticket',
             objectId: $ticketWireId,
-            relation: 'viewer',
+            relation: 'commenter',
             createdBy: $sysadminWireId,
             expiresInSeconds: self::SHARE_TTL_SECONDS,
         );
@@ -94,6 +99,14 @@ class CustomerController
                 'error' => ['code' => 'wrong_resource', 'message' => 'Share does not authorize a ticket view'],
             ], 403);
         }
+        // C2 (security-audit-v0.3.md): enforce share relation. 'commenter'
+        // implies the ability to both view and reply; pre-fix this endpoint
+        // accepted any share relation for the ticket.
+        if ($verified->relation !== 'commenter') {
+            return response()->json([
+                'error' => ['code' => 'wrong_relation', 'message' => 'Share does not authorize ticket access'],
+            ], 403);
+        }
         $ticketUuid = $this->normalizeUuid($verified->objectId);
         $ticket = $this->loadTicket($ticketUuid);
         if (! $ticket) {
@@ -117,6 +130,15 @@ class CustomerController
         if ($verified->objectType !== 'ticket') {
             return response()->json([
                 'error' => ['code' => 'wrong_resource', 'message' => 'Share does not authorize a ticket reply'],
+            ], 403);
+        }
+        // C2 (security-audit-v0.3.md): explicitly require 'commenter'.
+        // Pre-fix this endpoint accepted any share for the ticket — a
+        // 'viewer' share could post comments. The check here is the
+        // adopter contract: verified.relation MUST match route intent.
+        if ($verified->relation !== 'commenter') {
+            return response()->json([
+                'error' => ['code' => 'wrong_relation', 'message' => 'Share does not authorize a ticket reply'],
             ], 403);
         }
         $ticketUuid = $this->normalizeUuid($verified->objectId);

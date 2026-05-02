@@ -74,6 +74,19 @@ export function registerInstallRoute(app: FastifyInstance, ctx: InstallContext):
       throw err;
     }
 
+    // C3 (security-audit-v0.3.md): the original code checked
+    // isInstalled() BEFORE the BEGIN, leaving a TOCTOU race where two
+    // concurrent installer requests both pass the gate before either
+    // takes the txn. We now serialize installs with a Postgres
+    // transaction-scoped advisory lock + re-check inside the txn. The
+    // lock is released automatically at COMMIT/ROLLBACK. Picking a
+    // hardcoded constant rather than `hashtext('hearth_install')` so
+    // the value is stable across PG versions / locales.
+    const HEARTH_INSTALL_ADVISORY_LOCK_KEY = 0x6865617274686e73n; // "heartheng" packed
+
+    // Cheap pre-check outside the lock for the common-case
+    // already-installed response (no need to take the lock at all
+    // when the install is clearly done).
     if (await isInstalled(ctx.pool)) {
       return reply.code(409).send({
         error: { code: 'already_installed', message: 'Hearth has already been installed' },
@@ -83,6 +96,22 @@ export function registerInstallRoute(app: FastifyInstance, ctx: InstallContext):
     const client: PoolClient = await ctx.pool.connect();
     try {
       await client.query('BEGIN');
+
+      // Serialize concurrent installs. If two requests reach this
+      // point simultaneously, the second blocks here until the first
+      // commits, then re-checks below.
+      await client.query('SELECT pg_advisory_xact_lock($1)', [
+        HEARTH_INSTALL_ADVISORY_LOCK_KEY,
+      ]);
+      const lockedRes = await client.query<{ exists: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM inst) AS exists`,
+      );
+      if (lockedRes.rows[0]?.exists === true) {
+        await client.query('ROLLBACK');
+        return reply.code(409).send({
+          error: { code: 'already_installed', message: 'Hearth has already been installed' },
+        });
+      }
 
       const sharedPool = client as unknown as Pool;
       const identityStore = new PostgresIdentityStore(sharedPool);

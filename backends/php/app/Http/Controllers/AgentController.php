@@ -224,10 +224,13 @@ class AgentController
         if (! $this->checkOrgRole($session->usrId, $orgWire, self::ORG_ADMINS)) {
             return response()->json(['error' => ['code' => 'forbidden', 'message' => 'Only org admins can mint share tokens']], 403);
         }
+        // C2 (security-audit-v0.3.md): must match the relation
+        // CustomerController mints. Mismatch would silently break the
+        // customer flow with a 'wrong_relation' 403.
         $result = $this->shareStore->createShare(
             objectType: 'ticket',
             objectId: $ticketId,
-            relation: 'viewer',
+            relation: 'commenter',
             createdBy: $session->usrId,
             expiresInSeconds: self::SHARE_TTL_SECONDS,
         );

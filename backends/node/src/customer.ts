@@ -204,10 +204,17 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
       client.release();
     }
 
+    // C2 (security-audit-v0.3.md): the relation field of a share is
+    // load-bearing — verifyShareToken returns it, and the adopter MUST
+    // gate write paths on it. We use 'commenter' (not 'viewer') because
+    // this share authorizes BOTH reading the ticket AND posting
+    // comments. If we ever add a true read-only view (e.g. for
+    // notification recipients who shouldn't reply), it would be a
+    // separate share with relation='viewer'.
     const { share, token } = await ctx.shareStore.createShare({
       objectType: 'ticket',
       objectId: ticketWireId,
-      relation: 'viewer',
+      relation: 'commenter',
       createdBy: sysadminWireId,
       expiresInSeconds: SHARE_TTL_SECONDS,
     });
@@ -234,6 +241,14 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
       if (verified.objectType !== 'ticket') {
         return reply.code(403).send({
           error: { code: 'wrong_resource', message: 'Share does not authorize a ticket view' },
+        });
+      }
+      // C2: enforce share relation. 'commenter' implies the ability to
+      // both view and reply; if a future relation only granted view
+      // without reply, it would be added here.
+      if (verified.relation !== 'commenter') {
+        return reply.code(403).send({
+          error: { code: 'wrong_relation', message: 'Share does not authorize ticket access' },
         });
       }
       const ticketUuid = normalizeObjectIdToUuid(verified.objectId);
@@ -264,6 +279,16 @@ export function registerCustomerRoutes(app: FastifyInstance, ctx: CustomerContex
       if (verified.objectType !== 'ticket') {
         return reply.code(403).send({
           error: { code: 'wrong_resource', message: 'Share does not authorize a ticket reply' },
+        });
+      }
+      // C2 (security-audit-v0.3.md): explicitly require 'commenter'.
+      // Pre-fix this endpoint accepted any share for the ticket — a
+      // 'viewer' share could post comments. The check here is the
+      // adopter contract: verifiedShare.relation MUST match the
+      // intent of the route.
+      if (verified.relation !== 'commenter') {
+        return reply.code(403).send({
+          error: { code: 'wrong_relation', message: 'Share does not authorize a ticket reply' },
         });
       }
       const ticketUuid = normalizeObjectIdToUuid(verified.objectId);
