@@ -44,10 +44,13 @@ class InstallController
             ], 409);
         }
 
-        // 0x6865617274686e73 = "heartheng" packed (matches Node backend
-        // for cross-impl parity; either backend serializes against the
-        // same Postgres advisory-lock key).
-        $advisoryLockKey = 7521751562894049651;
+        // 0x6865617274686e73 = "hearthns" packed (h-e-a-r-t-h-n-s, 8 ASCII
+        // bytes). MUST match Node backend (install.ts:85) so the two
+        // backends serialize against the same Postgres advisory-lock key
+        // — adopters running mixed Node + PHP installers concurrently
+        // (e.g. blue/green deploy mid-install) get exactly one winner.
+        // security-audit-v0.3.md S13 re-audit caught a prior typo here.
+        $advisoryLockKey = 7522525896799448691;
 
         try {
             $result = DB::transaction(function () use ($validated, $advisoryLockKey): array {

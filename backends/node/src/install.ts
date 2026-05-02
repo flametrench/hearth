@@ -82,7 +82,10 @@ export function registerInstallRoute(app: FastifyInstance, ctx: InstallContext):
     // lock is released automatically at COMMIT/ROLLBACK. Picking a
     // hardcoded constant rather than `hashtext('hearth_install')` so
     // the value is stable across PG versions / locales.
-    const HEARTH_INSTALL_ADVISORY_LOCK_KEY = 0x6865617274686e73n; // "heartheng" packed
+    // 0x6865617274686e73 = "hearthns" packed (h-e-a-r-t-h-n-s, 8 ASCII
+    // bytes). MUST match the PHP backend's $advisoryLockKey so the two
+    // backends serialize against the same Postgres advisory-lock key.
+    const HEARTH_INSTALL_ADVISORY_LOCK_KEY = 0x6865617274686e73n;
 
     // Cheap pre-check outside the lock for the common-case
     // already-installed response (no need to take the lock at all
