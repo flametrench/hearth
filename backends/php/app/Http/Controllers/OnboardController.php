@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use Flametrench\Identity\Exceptions\DuplicateCredentialException;
 use Flametrench\Identity\PostgresIdentityStore;
 use Flametrench\Tenancy\Exceptions\OrgSlugConflictException;
 use Flametrench\Tenancy\PostgresTenancyStore;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 class OnboardController
 {
@@ -59,13 +59,16 @@ class OnboardController
             return response()->json([
                 'error' => ['code' => 'slug_taken', 'message' => "Org slug '{$input['org_slug']}' is already taken"],
             ], 409);
-        } catch (Throwable $e) {
-            if (str_contains($e->getMessage(), 'duplicate key') && str_contains($e->getMessage(), 'identifier')) {
-                return response()->json([
-                    'error' => ['code' => 'email_taken', 'message' => "Email '{$input['email']}' already has a credential"],
-                ], 409);
-            }
-            throw $e;
+        } catch (DuplicateCredentialException) {
+            // security-audit-v0.3.md M6: pre-fix this caught Throwable
+            // and string-matched the SQL error message ("duplicate key"
+            // && "identifier") — fragile across Postgres locale
+            // changes, driver wrapping, and PHP version upgrades. The
+            // SDK throws a typed DuplicateCredentialException; catch
+            // that directly.
+            return response()->json([
+                'error' => ['code' => 'email_taken', 'message' => "Email '{$input['email']}' already has a credential"],
+            ], 409);
         }
 
         return response()->json([
