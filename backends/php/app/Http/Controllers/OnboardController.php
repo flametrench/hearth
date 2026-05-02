@@ -21,7 +21,15 @@ class OnboardController
         $input = $request->validate([
             'display_name' => 'required|string',
             'email' => 'required|email',
-            'password' => 'required|string|min:8',
+            // security-audit-v0.3.md F7: NIST SP 800-63B 5.1.1.2 sets the
+            // floor for primary credentials at 8 chars but recommends a
+            // 15+ char minimum for human-chosen secrets. Hearth raises
+            // its floor to 12 — high enough that single-word passphrases
+            // are rejected, low enough that adopters porting an existing
+            // 8-char dataset don't get locked out without explicit
+            // migration. Adopters MAY tighten further; the SDK floor is
+            // adopter-set, not Flametrench-set.
+            'password' => 'required|string|min:12',
             'org_name' => 'required|string',
             'org_slug' => 'required|string|regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/',
         ]);
