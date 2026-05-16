@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hearth-python"
+version = "0.0.0"
+description = "Hearth Python backend (FastAPI) — Flametrench v0.3 reference application."
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "psycopg[binary,pool]>=3.2",
+    "flametrench-ids",
+    "flametrench-identity",
+    "flametrench-tenancy",
+    "flametrench-authz",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.7", "mypy>=1.13"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hearth_python"]
+
+# The four flametrench-* SDKs are installed from local source via uv pip's
+# editable-from-path or a sibling-directory install pattern during the M4
+# block on PyPI publish. See README.md for the bootstrap command.
+[tool.uv.sources]
+flametrench-ids = { path = "../../../ids-python", editable = true }
+flametrench-identity = { path = "../../../identity-python", editable = true }
+flametrench-tenancy = { path = "../../../tenancy-python", editable = true }
+flametrench-authz = { path = "../../../authz-python", editable = true }
