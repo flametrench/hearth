@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-TAG="${HEARTH_SPEC_TAG:-v0.2.0}"
+TAG="${HEARTH_SPEC_TAG:-v0.3.0}"
 BASE="https://raw.githubusercontent.com/flametrench/spec/${TAG}/reference"
 
 cd "$(dirname "$0")"

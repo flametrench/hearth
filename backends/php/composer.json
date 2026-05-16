@@ -10,11 +10,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "flametrench/authz": "^0.2.0",
-        "flametrench/identity": "^0.2.0",
-        "flametrench/ids": "^0.2.0",
+        "flametrench/authz": "^0.3.0",
+        "flametrench/identity": "^0.3.0",
+        "flametrench/ids": "^0.3.0",
         "flametrench/laravel": "^0.2.0",
-        "flametrench/tenancy": "^0.2.0",
+        "flametrench/tenancy": "^0.3.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0"
     },
