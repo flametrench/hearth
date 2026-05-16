@@ -38,7 +38,7 @@ Pick one and follow its README.
 | ------- | ---------------------------------------------- | --------- | ---- | ---------------------------------------------- |
 | Node    | ✅ live — 12/12 Playwright green               | Fastify   | 5001 | [`backends/node`](backends/node/README.md)     |
 | PHP     | ✅ live — 12/12 Playwright green               | Laravel   | 5002 | [`backends/php`](backends/php/README.md)       |
-| Python  | 🔒 M4 — gated on PyPI publish unblock          | FastAPI   | 5003 | [`backends/python`](backends/python/README.md) |
+| Python  | ✅ live — 24/24 Playwright green               | FastAPI   | 5003 | [`backends/python`](backends/python/README.md) |
 | Java    | 🔒 M5 — gated on Maven Central publish unblock | Javalin   | 5004 | [`backends/java`](backends/java/README.md)     |
 
 The React SPA in [`web/`](web/) is backend-agnostic; point `FT_API_URL` at
@@ -110,7 +110,7 @@ Suites: `customer-flow`, `agent-flow`, `admin-flow`, `adr-0013-bootstrap`.
 | M1 — Node backend + SPA + 14 routes     | ✅ done                                      |
 | M2 — Playwright e2e + first GitHub push | ✅ done — 12 tests green                     |
 | M3 — PHP/Laravel backend                | ✅ done — 12/12 Playwright parity with Node  |
-| M4 — Python/FastAPI                     | 🔒 blocked on PyPI publish                   |
+| M4 — Python/FastAPI                     | ✅ done — 24/24 Playwright parity with Node + PHP; SDKs install editable from sibling flametrench-setup/*-python/ during PyPI publish block |
 | M5 — Java/Javalin                       | 🔒 blocked on Maven Central publish          |
 | M6 — CI matrix + final polish           | ✅ done — Node e2e + PHP install smoke in CI |
 
@@ -119,8 +119,9 @@ CI: `.github/workflows/ci.yml` runs on every push/PR. Four jobs:
 mailpit + Playwright suite against Node @ :5001), `php-install-smoke`
 (Postgres + apply schema + curl install at :5002), and `php-e2e`
 (Postgres + mailpit + Playwright suite against PHP @ :5002 — full
-wire-equivalence with Node). Python and Java jobs land when the
-PyPI / Maven Central publish blocks unblock.
+wire-equivalence with Node). A python-e2e job will follow once an
+editable-install workflow for the four SDKs is wired into CI; Java
+lands when Maven Central publish unblocks.
 
 For the full milestone plan see internal doc `hearth-plan.md`.
 
