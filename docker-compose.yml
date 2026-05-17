@@ -92,8 +92,27 @@ services:
       timeout: 3s
       retries: 10
 
+  postgres-go:
+    image: postgres:17-alpine
+    container_name: hearth-pg-go
+    restart: unless-stopped
+    ports:
+      - '5505:5432'
+    environment:
+      POSTGRES_USER: hearth
+      POSTGRES_PASSWORD: hearth
+      POSTGRES_DB: hearth
+    volumes:
+      - hearth-pg-go:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hearth -d hearth']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   hearth-pg-node:
   hearth-pg-php:
   hearth-pg-python:
   hearth-pg-java:
+  hearth-pg-go:
